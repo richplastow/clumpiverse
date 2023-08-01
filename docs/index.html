@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, height=device-height,
+    initial-scale=1.0, minimum-scale=1.0, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="icon" href="data:;base64,iVBORwOKGO=" />
+  <title>Welcome to the Clumpiverse</title>
+
+  <style>
+    body {
+      padding: 10px;
+      margin: 0;
+      font: 0/0 Arial, Helvetica, sans-serif; /* remove unexpected gaps */
+      text-align: center;
+      transition: background-color 0.5s;
+    }
+    body.theme-purple { background: #291337; }
+    body.theme-black  { background: #000; }
+    body.theme-white  { background: #fff; }
+
+    main, canvas, .panel, #panel-wrap, .btn {
+      display: inline-block;
+      vertical-align: top;
+    }
+
+    .ui {
+      border-width: 4px;
+      border-style: solid;
+      border-radius: 4px;
+      transition: border-color 0.5s;
+    }
+    body.theme-purple .ui { border-color: #0009; }
+    body.theme-black  .ui { border-color: #fff3; }
+    body.theme-white  .ui { border-color: #0003; }
+
+    canvas {
+      width: 640px;
+      height: 640px;
+      margin: 0 12px 12px 0;
+      transform: scaleY(-1); /* flip Y axis */
+      cursor: crosshair;
+    }
+
+    #panel-wrap {
+      width: 680px;
+    }
+    @media (min-width: 1120px) {
+      #panel-wrap {
+        width: 440px;
+        height: 650px;
+      }
+    }
+
+    .panel {
+      box-sizing: border-box;
+      overflow: hidden;
+      width: 208px;
+      height: 208px;
+      margin: 0 12px 12px 0;
+      padding: 10px;
+      text-align: left;
+      transition: background-color 0.5s;
+    }
+    body.theme-purple .panel { background-color: #0006; }
+    body.theme-black  .panel { background-color: #fff2; }
+    body.theme-white  .panel { background-color: #0002; }
+
+    #click-prompt, #click-more-prompt {
+      text-align: center;
+      transition: opacity 0.5s;
+    }
+    .hid {
+      opacity: 0;
+    }
+
+    .btn {
+      width: 44px;
+      height: 44px;
+      margin: 4px;
+      overflow: hidden;
+      cursor: pointer;
+      opacity: 0.7;
+      outline: 2px solid #fff0;
+      outline-offset: 2px;
+      transition: opacity 0.3s, outline-color 0.3s;
+    }
+    .btn:hover {
+      opacity: 1;
+    }
+    .btn.selected {
+      cursor: default;
+      opacity: 1;
+    }
+    body.theme-purple .btn.selected { outline-color: #fff9; }
+    body.theme-black  .btn.selected { outline-color: #fff9; }
+    body.theme-white  .btn.selected { outline-color: #0009; }
+
+
+    /* #panel-1 */
+    #panel-1 .btn { border-radius: 44px; }
+    #matter-antigrav { background: #870287; }
+    #matter-elastic  { background: #8a0635; }
+    #matter-gas      { background: #015e90; }
+    body.matter-antigrav .mass { background: #87028780; }
+    body.matter-elastic  .mass { background: #8a063580; }
+    body.matter-gas      .mass { background: #015e9080; }
+
+
+    /* #panel-2 */
+    #panel-2 {
+      transition: background-color 0.5s;
+    }
+    body.matter-antigrav #panel-2 { background: #87028730; }
+    body.matter-elastic  #panel-2 { background: #8a063530; }
+    body.matter-gas      #panel-2 { background: #015e9030; }
+    .size-mass {
+      width: 44px;
+      height: 44px;
+      border-radius: 44px;
+      transform-origin: center;
+      transition: background-color 0.3s, transform 0.5s;
+    }
+    body.size-selected-xs #size-less { visibility: hidden; }
+    body.size-selected-xs #size-less .size-mass { transform: scale(0); }
+    body.size-selected-xs #size-more .size-mass { transform: scale(0.3); }
+    body.size-selected-s  #size-less .size-mass { transform: scale(0.2); }
+    body.size-selected-s  #size-more .size-mass { transform: scale(0.5); }
+    body.size-selected-m  #size-less .size-mass { transform: scale(0.3); }
+    body.size-selected-m  #size-more .size-mass { transform: scale(0.7); }
+    body.size-selected-l  #size-less .size-mass { transform: scale(0.5); }
+    body.size-selected-l  #size-more .size-mass { transform: scale(1.0); }
+    body.size-selected-xl #size-less .size-mass { transform: scale(0.7); }
+    body.size-selected-xl #size-more .size-mass { transform: scale(1.5); }
+    body.size-selected-xl #size-more { visibility: hidden; }
+    .matter-preview {
+      width: 165px;
+      height: 165px;
+      margin: -165px 0 0 4px;
+      transform: translate(105px, 173px);
+    }
+    .matter-center {
+      width: 8px;
+      height: 8px;
+      border-radius: 8px;
+      margin: -164px 0 0 0px;
+      transform: translate(78px, 77px);
+      opacity: 1;
+      transition: background-color 0.3s, opacity 0.3s;
+    }
+    body.guide-none .matter-center { opacity: 0; }
+    .matter-line {
+      width: 150px;
+      height: 4px;
+      margin: -4px 0 0 0;
+      opacity: 1;
+      transition: background-color 0.3s, opacity 0.3s, transform 0.5s;
+    }
+    body.guide-some .matter-line, body.guide-none .matter-line { opacity: 0; }
+    body.size-selected-xs .matter-line { transform: translate(56.3px, 89.4px) rotate(16deg); }
+    body.size-selected-s  .matter-line { transform: translate(40.5px, 84.8px) rotate(16deg); }
+    body.size-selected-m  .matter-line { transform: translate(24.5px, 80.3px) rotate(16deg); }
+    body.size-selected-l  .matter-line { transform: translate(0.5px, 73.3px) rotate(16deg); }
+    body.size-selected-xl .matter-line { transform: translate(-38.8px, 62px) rotate(16deg); }
+    .matter-mass {
+      width: 165px;
+      height: 165px;
+      margin: -8px 0 0 0;
+      border-radius: 165px;
+      transform-origin: center;
+      transition: background-color 0.3s, transform 0.5s;
+    }
+    body.size-selected-xs .matter-mass { transform: scale(0.3); }
+    body.size-selected-s  .matter-mass { transform: scale(0.5); }
+    body.size-selected-m  .matter-mass { transform: scale(0.7); }
+    body.size-selected-l  .matter-mass { transform: scale(1.0); }
+    body.size-selected-xl .matter-mass { transform: scale(1.5); }
+
+
+    /* #panel-3 */
+    #theme-purple { background: #291337; }
+    #theme-black  { background: #000; }
+    #theme-white  { background: #fff; }
+    body.theme-purple .center { background: #fff; }
+    body.theme-black  .center { background: #fff; }
+    body.theme-white  .center { background: #000; }
+    body.theme-purple .line   { background: #fff9; }
+    body.theme-black  .line   { background: #fff9; }
+    body.theme-white  .line   { background: #0006; }
+
+
+    /* #panel-4 */
+    .guide-center {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 8px;
+      margin: 23px 0 0 28px;
+      transition: background-color 0.3s;
+    }
+    .guide-line {
+      width: 40px;
+      height: 4px;
+      margin: 19px 0 0 -9px;
+      transform: rotate(16deg);
+      transition: background-color 0.3s;
+    }
+    .guide-mass {
+      width: 60px;
+      height: 60px;
+      margin: -25px 0 0 2px;
+      border-radius: 60px;
+      transition: background-color 0.3s;
+    }
+
+
+    /* #panel-5 */
+    .trail-mass {
+      width: 30px;
+      height: 30px;
+      margin: -35px 0 0 7px;
+      border-radius: 30px;
+      transition: background-color 0.3s;
+    }
+    .trail-mass.first { margin: 10px 0 0 7px }
+    .trail-mass.fade-6 { opacity: 0.6 }
+    .trail-mass.fade-4 { opacity: 0.4 }
+    .trail-mass.fade-2 { opacity: 0.2 }
+    .trail-mass.fade-1 { opacity: 0.1 }
+    body.matter-antigrav .trail-mass { background: #870287; }
+    body.matter-elastic  .trail-mass { background: #8a0635; }
+    body.matter-gas      .trail-mass { background: #015e90; }
+
+
+    /* #panel-6 */
+    .tpgy-center {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 10px;
+      transition: background-color 0.3s;
+    }
+    .tpgy-line {
+      height: 4px;
+      transition: background-color 0.3s;
+    }
+    .tpgy-line.mini { width: 20px; }
+    .tpgy-line.midi { width: 30px; }
+    .tpgy-line.maxi { width: 80px; }
+
+  </style>
+</head>
+<body class="
+  guide-all
+  matter-elastic
+  theme-purple
+  size-selected-l
+  tpgy-mono
+  trail-none
+">
+  <main>
+    <canvas id="canvas" class="ui" width="640" height="640"></canvas>
+    <div id="panel-wrap">
+
+      <div id="panel-1" class="panel ui">
+        <div id="matter-elastic" class="btn ui selected"></div>
+        <div id="matter-antigrav" class="btn ui"></div>
+        <div id="matter-gas" class="btn ui"></div>
+      </div>
+
+      <div id="panel-2" class="panel ui">
+        <div class="matter-preview">
+          <div class="matter-mass mass"></div>
+          <div class="matter-center center"></div>
+          <div class="matter-line line"></div>
+        </div>
+        <div id="size-less" class="btn ui">
+          <div class="size-mass mass"></div>
+        </div>
+        <div id="size-more" class="btn ui">
+          <div class="size-mass mass"></div>
+        </div>
+      </div>
+
+      <div id="panel-3" class="panel ui">
+        <div id="theme-purple" class="btn ui selected"></div>
+        <div id="theme-black" class="btn ui"></div>
+        <div id="theme-white" class="btn ui"></div>
+      </div>
+
+      <div id="panel-4" class="panel ui">
+        <div id="guide-all" class="btn ui selected">
+          <div class="guide-center center"></div>
+          <div class="guide-line line"></div>
+          <div class="guide-mass mass"></div>
+        </div>
+        <div id="guide-some" class="btn ui">
+          <div class="guide-center center"></div>
+          <div class="guide-line line hid"></div>
+          <div class="guide-mass mass"></div>
+        </div>
+        <div id="guide-none" class="btn ui">
+          <div class="guide-center center hid"></div>
+          <div class="guide-line line hid"></div>
+          <div class="guide-mass mass"></div>
+        </div>
+      </div>
+
+      <div id="panel-5" class="panel ui">
+        <div id="trail-none" class="btn ui selected">
+          <div class="trail-mass fade-4 first"></div>
+        </div>
+        <div id="trail-fade" class="btn ui">
+          <div class="trail-mass first"></div>
+          <div class="trail-mass fade-6"></div>
+          <div class="trail-mass fade-4"></div>
+          <div class="trail-mass fade-2"></div>
+          <div class="trail-mass fade-1"></div>
+        </div>
+        <div id="trail-full" class="btn ui">
+          <div class="trail-mass first"></div>
+          <div class="trail-mass"></div>
+          <div class="trail-mass"></div>
+          <div class="trail-mass"></div>
+          <div class="trail-mass"></div>
+        </div>
+      </div>
+
+      <div id="panel-6" class="panel ui">
+        <div id="tpgy-none" class="btn ui">
+        </div>
+        <div id="tpgy-mono" class="btn ui selected">
+          <div class="tpgy-center center" style="margin:15px 0 0 17px"></div>
+        </div>
+        <div id="tpgy-pair" class="btn ui">
+          <div class="tpgy-center center" style="margin:12px 0 0 7px"></div>
+          <div class="tpgy-center center" style="margin:18px 0 0 27px"></div>
+          <div class="tpgy-line line mini"
+            style="transform: rotate(17deg) translate(17px,14px)"></div>
+        </div>
+        <div id="tpgy-hair" class="btn ui">
+          <div class="tpgy-center center" style="margin:3px 0 0 31px"></div>
+          <div class="tpgy-center center" style="margin:30px 0 0 4px"></div>
+          <div class="tpgy-center center" style="margin:17px 0 0 17px"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(-14px,16px) rotate(-45deg)"></div>
+        </div>
+        <div id="tpgy-strut" class="btn ui">
+          <div class="tpgy-center center" style="margin:22px 0 0 1px"></div>
+          <div class="tpgy-center center" style="margin:7px 0 0 16px"></div>
+          <div class="tpgy-center center" style="margin:27px 0 0 18px"></div>
+          <div class="tpgy-center center" style="margin:11px 0 0 33px"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(-18px,8px) rotate(-45deg)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(-14px,24px) rotate(-45deg)"></div>
+          <div class="tpgy-line line mini"
+            style="transform: translate(5px,19px) rotate(15deg)"></div>
+          <div class="tpgy-line line mini"
+            style="transform: translate(20px,0) rotate(15deg)"></div>
+          <div class="tpgy-line line mini"
+            style="transform: translate(-3px,18px) rotate(85deg)"></div>
+          <div class="tpgy-line line mini"
+            style="transform: translate(12px,-4px) rotate(85deg)"></div>
+          <div class="tpgy-line line mini"
+            style="transform: translate(27px,-23px) rotate(85deg)"></div>
+        </div>
+        <div id="tpgy-girder" class="btn ui">
+          <div class="tpgy-center center" style="margin:16px 0 0 1px"></div>
+          <div class="tpgy-center center" style="margin:1px 0 0 16px"></div>
+          <div class="tpgy-center center" style="margin:32px 0 0 18px"></div>
+          <div class="tpgy-center center" style="margin:17px 0 0 33px"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(-20px,6px) rotate(-45deg)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(-12px,26px) rotate(-45deg)"></div>
+          <div class="tpgy-line line mini"
+            style="transform: translate(5px,19px) rotate(44deg)"></div>
+          <div class="tpgy-line line mini"
+            style="transform: translate(20px,0) rotate(44deg)"></div>
+          <div class="tpgy-line line midi"
+            style="transform: translate(-8px,18px) rotate(87deg)"></div>
+          <div class="tpgy-line line midi"
+            style="transform: translate(7px,-3px) rotate(87deg)"></div>
+          <div class="tpgy-line line midi"
+            style="transform: translate(22px,-23px) rotate(87deg)"></div>
+          <div class="tpgy-line line midi"
+            style="transform: translate(5px,-8.5px) rotate(3deg)"></div>
+          <div class="tpgy-line line midi"
+            style="transform: translate(25px,-27px) rotate(3deg)"></div>
+          <div class="tpgy-line line midi"
+            style="transform: translate(-10px,-2px) rotate(3deg)"></div>
+        </div>
+        <div id="tpgy-pyramid" class="btn ui">
+          <div class="tpgy-center center" style="margin:3px 0 0 17px"></div>
+          <div class="tpgy-center center" style="margin:27px 0 0 3px"></div>
+          <div class="tpgy-center center" style="margin:27px 0 0 31px"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(0,30.3px)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(-25px,14px) rotate(-60deg)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(-8.6px,14px) rotate(60deg)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(3.3px,6px) rotate(-60deg)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(-36.6px,6px) rotate(60deg)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(0,-14px)"></div>
+        </div>
+        <div id="tpgy-plank" class="btn ui">
+          <div class="tpgy-center center" style="margin:4px 0 0 4px"></div>
+          <div class="tpgy-center center" style="margin:4px 0 0 30px"></div>
+          <div class="tpgy-center center" style="margin:30px 0 0 4px"></div>
+          <div class="tpgy-center center" style="margin:30px 0 0 30px"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(0,7px)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(0,29px)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(-31px,0) rotate(90deg)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(-5px,0) rotate(90deg)"></div>
+        </div>
+        <div id="tpgy-brick" class="btn ui">
+          <div class="tpgy-center center" style="margin:4px 0 0 4px"></div>
+          <div class="tpgy-center center" style="margin:4px 0 0 30px"></div>
+          <div class="tpgy-center center" style="margin:30px 0 0 4px"></div>
+          <div class="tpgy-center center" style="margin:30px 0 0 30px"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(0,7px)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(0,29px)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(-31px,0) rotate(90deg)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(-5px,0) rotate(90deg)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(-18px,4px) rotate(45deg)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(-18px,0) rotate(-45deg)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(-44px,-4px) rotate(45deg)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(-44px,-8px) rotate(-45deg)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(8px,-12px) rotate(45deg)"></div>
+          <div class="tpgy-line line maxi"
+            style="transform: translate(8px,-16px) rotate(-45deg)"></div>
+        </div>
+      </div>
+
+  </main>
+
+
+
+
+<!-- Initialise any missing stored values. -->
+<script>!function(){
+  if (! window.localStorage.getItem('matter-antigrav-size'))
+    window.localStorage.setItem('matter-antigrav-size', 'size-selected-l')
+  if (! window.localStorage.getItem('matter-elastic-size'))
+    window.localStorage.setItem('matter-elastic-size', 'size-selected-l')
+  if (! window.localStorage.getItem('matter-gas-size'))
+    window.localStorage.setItem('matter-gas-size', 'size-selected-l')
+}()</script>
+
+
+
+
+  <!-- #panel-1 -->
+  <script>!function(){
+    const $body = document.body;
+    const $panel = document.querySelector('#panel-1');
+    const $$btns = Array.from($panel.querySelectorAll('.btn'));
+
+    function getCurrSize() {
+      if ($body.classList.contains('size-selected-xs')) return 'size-selected-xs'
+      if ($body.classList.contains('size-selected-s'))  return 'size-selected-s'
+      if ($body.classList.contains('size-selected-m'))  return 'size-selected-m'
+      if ($body.classList.contains('size-selected-l'))  return 'size-selected-l'
+      if ($body.classList.contains('size-selected-xl')) return 'size-selected-xl'
+      return 'size-selected-l' // fallback, in case of invalid state
+    }
+
+    // 
+    $panel.addEventListener('click', e => {
+      const $btn = e.target
+      if (! $btn.classList.contains('btn')) return // not a button
+      if ($btn.classList.contains('selected')) return // already selected
+      $$btns.forEach($b => $b.classList.remove('selected'))
+      $body.classList.remove('matter-antigrav', 'matter-elastic', 'matter-gas')
+      $btn.classList.add('selected')
+      $body.classList.add($btn.id)
+      const currSize = getCurrSize()
+      $body.classList.remove(currSize)
+      const nextSize = window.localStorage.getItem(`${$btn.id}-size`)
+      $body.classList.add(nextSize)
+    })
+
+  }()</script>
+
+
+
+
+  <!-- #panel-2 -->
+  <script>!function(){
+    const $body = document.body;
+    const $panel = document.querySelector('#panel-2');
+    const $sizeLess = $panel.querySelector('#size-less');
+    const $sizeMore = $panel.querySelector('#size-more');
+
+    function getCurrSize() {
+      if ($body.classList.contains('size-selected-xs')) return 'size-selected-xs'
+      if ($body.classList.contains('size-selected-s'))  return 'size-selected-s'
+      if ($body.classList.contains('size-selected-m'))  return 'size-selected-m'
+      if ($body.classList.contains('size-selected-l'))  return 'size-selected-l'
+      if ($body.classList.contains('size-selected-xl')) return 'size-selected-xl'
+      return 'size-selected-l' // fallback, in case of invalid state
+    }
+
+    function getNextSize(currSize, isLess) {
+      switch (currSize) {
+        case 'size-selected-xs':
+          return isLess ? 'size-selected-xs' : 'size-selected-s'
+        case 'size-selected-s':
+          return isLess ? 'size-selected-xs' : 'size-selected-m'
+        case 'size-selected-m':
+          return isLess ? 'size-selected-s'  : 'size-selected-l'
+        case 'size-selected-l':
+          return isLess ? 'size-selected-m'  : 'size-selected-xl'
+        case 'size-selected-xl':
+          return isLess ? 'size-selected-l'  : 'size-selected-xl'
+      }
+      return 'size-selected-l' // fallback, in case of invalid state
+    }
+
+    function getSelectedMatter() {
+      if ($body.classList.contains('matter-antigrav')) return 'matter-antigrav'
+      if ($body.classList.contains('matter-elastic'))  return 'matter-elastic'
+      if ($body.classList.contains('matter-gas'))      return 'matter-gas'
+      return 'matter-elastic' // fallback, in case of invalid state
+    }
+
+    // 
+    $panel.addEventListener('click', e => {
+      let $btn = e.target
+      if (! $btn.classList.contains('btn')) {
+        $btn = $btn.parentNode; // could have clicked on .size-mass etc
+        if (! $btn.classList.contains('btn')) return // not a button
+      }
+      if ($btn === $sizeLess || $btn === $sizeMore) {
+        const currSize = getCurrSize()
+        $body.classList.remove(currSize)
+        let nextSize = getNextSize(currSize, $btn === $sizeLess)
+        $body.classList.add(nextSize)
+        const selectedMatter = getSelectedMatter()
+        window.localStorage.setItem(`${selectedMatter}-size`, nextSize)
+        window.dispatchEvent(new Event('set-size-selected'))
+      }
+    })
+
+  }()</script>
+
+
+
+
+  <!-- #panel-3 -->
+  <script>!function(){
+    const $body = document.body;
+    const $panel = document.querySelector('#panel-3');
+    const $$btns = Array.from($panel.querySelectorAll('.btn'));
+
+    const storedValue = window.localStorage.getItem('theme')
+    if (storedValue) {
+      $$btns.forEach($b => $b.classList.remove('selected'))
+      $body.classList.remove('theme-purple', 'theme-black', 'theme-white')
+      document.getElementById(storedValue).classList.add('selected')
+      $body.classList.add(storedValue)
+    }
+
+    // 
+    $panel.addEventListener('click', e => {
+      const $btn = e.target
+      if (! $btn.classList.contains('btn')) return // not a button
+      if ($btn.classList.contains('selected')) return // already selected
+      $$btns.forEach($b => $b.classList.remove('selected'))
+      $body.classList.remove('theme-purple', 'theme-black', 'theme-white')
+      $btn.classList.add('selected')
+      $body.classList.add($btn.id)
+      window.dispatchEvent(new Event('set-theme'))
+      window.localStorage.setItem('theme', $btn.id)
+    })
+
+  }()</script>
+
+
+
+
+  <!-- #panel-4 -->
+  <script>!function(){
+    const $body = document.body;
+    const $panel = document.querySelector('#panel-4');
+    const $$btns = Array.from($panel.querySelectorAll('.btn'));
+
+    // 
+    $panel.addEventListener('click', e => {
+      let $btn = e.target
+      if (! $btn.classList.contains('btn')) {
+        $btn = $btn.parentNode; // could have clicked on .guide-line etc
+        if (! $btn.classList.contains('btn')) return // not a button
+      }
+      if ($btn.classList.contains('selected')) return // already selected
+      $$btns.forEach($b => $b.classList.remove('selected'))
+      $body.classList.remove('guide-all', 'guide-some', 'guide-none')
+      $btn.classList.add('selected')
+      $body.classList.add($btn.id)
+      window.dispatchEvent(new Event('set-guide'))
+    })
+
+  }()</script>
+
+
+
+
+  <!-- #panel-5 -->
+  <script>!function(){
+    const $body = document.body;
+    const $panel = document.querySelector('#panel-5');
+    const $$btns = Array.from($panel.querySelectorAll('.btn'));
+
+    // 
+    $panel.addEventListener('click', e => {
+      let $btn = e.target
+      if (! $btn.classList.contains('btn')) {
+        $btn = $btn.parentNode; // could have clicked on .trail-mass
+        if (! $btn.classList.contains('btn')) return // not a button
+      }
+      if ($btn.classList.contains('selected')) return // already selected
+      $$btns.forEach($b => $b.classList.remove('selected'))
+      $body.classList.remove('trail-none', 'trail-fade', 'trail-full')
+      $btn.classList.add('selected')
+      $body.classList.add($btn.id)
+      window.dispatchEvent(new Event('set-trail'))
+    })
+
+  }()</script>
+
+
+
+
+  <!-- #panel-6 -->
+  <script>!function(){
+    const $body = document.body;
+    const $panel = document.querySelector('#panel-6');
+    const $$btns = Array.from($panel.querySelectorAll('.btn'));
+
+    // 
+    $panel.addEventListener('click', e => {
+      let $btn = e.target
+      if (! $btn.classList.contains('btn')) {
+        $btn = $btn.parentNode; // could have clicked on .tpgy-line etc
+        if (! $btn.classList.contains('btn')) return // not a button
+      }
+      if ($btn.classList.contains('selected')) return // already selected
+      $$btns.forEach($b => $b.classList.remove('selected'))
+      $body.classList.remove(
+        'tpgy-none',
+        'tpgy-mono',
+        'tpgy-pair',
+        'tpgy-hair',
+        'tpgy-strut',
+        'tpgy-girder',
+        'tpgy-pyramid',
+        'tpgy-plank',
+        'tpgy-brick',
+      )
+      $btn.classList.add('selected')
+      $body.classList.add($btn.id)
+      window.dispatchEvent(new Event('set-tpgy'))
+    })
+
+  }()</script>
+
+
+
+
+  <!-- canvas -->
+  <script type="module">
+    import { default as wasm, Clumpiverse }
+      from './lib/wasm/welcome_to_the_clumpiverse.js'
+
+    const $body = document.body;
+    const $canvas = document.getElementById('canvas')
+    let currCursorMode = 'crosshair'
+    let currHovered = '[]'
+    let awaitingUnhover = []
+    let mouseIsDown = false
+
+    // When wasm is ready...
+    wasm().then(module => {
+
+
+
+
+      // INITIALISE
+
+      // Create an instance of ‘Clumpiverse’.
+      const clumpiverse = Clumpiverse.new(
+        640,        // canvas_w
+        640,        // canvas_h
+        'canvas',   // canvas_id
+        getGuide(), // guide_f64
+        getSize('matter-antigrav'), // matter_antigrav_size_f64
+        getSize('matter-elastic'),  // matter_elastic_size_f64
+        getSize('matter-gas'),      // matter_gas_size_f64
+        getTheme(), // theme_f64
+        getTpgy(),  // tpgy_f64
+        getTrail(), // trail_f64
+      )
+
+      // // Add an initial Mass. @TODO replace with timeout hint to user
+      // clumpiverse.add_mass(
+      //   256,            // mass_x
+      //   500,            // mass_y
+      //   getMatter(), // matter_f64
+      //   80,             // radius
+      // )
+
+
+
+
+      // CANVAS INPUT
+
+      // Deal with a the mouse button being pressed. @TODO test on touchscreens
+      $canvas.addEventListener('mousedown', e => {
+        mouseIsDown = true
+        const rect = $canvas.getBoundingClientRect()
+
+        // If we’re hovering over a Mass and are in 'grab' mode, start grabbing.
+        if (currCursorMode === 'grab') {
+          clumpiverse.grab_masses(
+            e.x - rect.x,         // grab_x
+            640 - (e.y - rect.y), // grab_y — note `transform: scaleY(-1)`
+          )
+          // @TODO the grab might have failed, so allow for that
+          currCursorMode = $canvas.style.cursor = 'grabbing'
+
+        // We are not hovering over anything, so create a new Mass.
+        } else {
+          const id = clumpiverse.add_mass(
+            e.x - rect.x,         // click_x
+            640 - (e.y - rect.y), // click_y — note `transform: scaleY(-1)`
+            getMatter(),          // matter_f64
+            80,                   // radius
+          )
+          awaitingUnhover.push(id)
+        }
+      })
+
+      // Deal with a the mouse button being unpressed. @TODO test on touchscreens
+      $canvas.addEventListener('mouseup', e => {
+        mouseIsDown = false
+        // If we are grabbing, ungrab.
+        if (currCursorMode === 'grabbing') {
+          clumpiverse.ungrab_masses()
+          currCursorMode = $canvas.style.cursor = 'grab'
+        } else {
+          currCursorMode = $canvas.style.cursor = 'crosshair'
+        }
+      })
+
+      // Tell the Clumpiverse that the mouse position has changed. @TODO not on touchscreens
+      $canvas.addEventListener('mousemove', e => {
+        const rect = $canvas.getBoundingClientRect()
+        clumpiverse.update_hover(
+          e.x - rect.x,         // hover_x
+          640 - (e.y - rect.y), // hover_y — note `transform: scaleY(-1)`
+        )
+      })
+
+      // Deal with a the mouse leaving the canvas. @TODO test on touchscreens
+      $canvas.addEventListener('mouseout', e => {
+        // If we are grabbing, ungrab.
+        if (currCursorMode === 'grabbing') {
+          clumpiverse.ungrab_masses()
+          currCursorMode = $canvas.style.cursor = 'grab'
+        } else {
+          currCursorMode = $canvas.style.cursor = 'crosshair'
+        }
+        clumpiverse.update_hover(
+          -1, // hover_x signifies mouse outside canvas
+          -1, // hover_y signifies mouse outside canvas
+        )
+      })
+
+
+
+
+      // PANEL INPUT
+
+      window.addEventListener('set-tpgy', function() {
+        clumpiverse.set_tpgy(getTpgy())
+      })
+      window.addEventListener('set-guide', function() {
+        clumpiverse.set_guide(getGuide())
+      })
+      window.addEventListener('set-size-selected', function() {
+        clumpiverse.set_size(getMatter(), getSize())
+      })
+      window.addEventListener('set-theme', function() {
+        clumpiverse.set_theme(getTheme())
+      })
+      window.addEventListener('set-trail', function() {
+        clumpiverse.set_trail(getTrail())
+      })
+
+
+
+
+      // RENDER
+
+      // Start the render loop.
+      onTick(performance.now())
+      function onTick(now) {
+        clumpiverse.set_now(now)
+        clumpiverse.render()
+        monitorHovered(clumpiverse.get_hovered()) // eg String "[]" or "[3,4,5]"
+        requestAnimationFrame(onTick)
+      }
+
+      // On each animation frame, check whether the cursor should be changed.
+      function monitorHovered(nextHovered) {
+        if (currHovered === nextHovered) return
+        currHovered = nextHovered
+
+        // If nothing is being hovered, show a crosshair.
+        // It also means that the `awaitingUnhover` array can be emptied.
+        if (nextHovered === '[]') {
+          currCursorMode = $canvas.style.cursor = 'crosshair'
+          awaitingUnhover = []
+          return
+        }
+
+        // One or more Masses are being hovered. But if we’re grabbing,
+        // do nothing.
+        if (currCursorMode === 'grabbing') return
+
+        // Recently created Mass ids are stored in `awaitingUnhover`.
+        // We should remove any which are NOT now being hovered over.
+        const hovered = JSON.parse(nextHovered)
+        const nextAwaitingUnhover = [];
+        awaitingUnhover.forEach(id => {
+          if (hovered.includes(id)) nextAwaitingUnhover.push(id)
+        })
+        awaitingUnhover = nextAwaitingUnhover
+
+        // One or more Masses are being hovered. But only show the 'grab' cursor
+        // if none of them were just created. This allows a user to create lots
+        // of Masses quickly by rapidly clicking.
+        if (awaitingUnhover.length === 0)
+          currCursorMode = $canvas.style.cursor = 'grab'
+        else
+          currCursorMode = $canvas.style.cursor = 'crosshair'
+      }
+
+    })
+
+
+
+
+    // PRESETS
+
+    function getTpgy() {
+      if ($body.classList.contains('tpgy-none'))    return 0
+      if ($body.classList.contains('tpgy-mono'))    return 1
+      if ($body.classList.contains('tpgy-pair'))    return 2
+      if ($body.classList.contains('tpgy-hair'))    return 3
+      if ($body.classList.contains('tpgy-strut'))   return 4
+      if ($body.classList.contains('tpgy-girder'))  return 5
+      if ($body.classList.contains('tpgy-pyramid')) return 6
+      if ($body.classList.contains('tpgy-plank'))   return 7
+      if ($body.classList.contains('tpgy-brick'))   return 8
+    }
+
+    function getGuide() {
+      if ($body.classList.contains('guide-all'))  return 0
+      if ($body.classList.contains('guide-some')) return 1
+      if ($body.classList.contains('guide-none')) return 2
+    }
+
+    function getMatter() {
+      if ($body.classList.contains('matter-antigrav')) return 0
+      if ($body.classList.contains('matter-elastic'))  return 1
+      if ($body.classList.contains('matter-gas'))      return 2
+    }
+
+    function getMatterClassname() {
+      if ($body.classList.contains('matter-antigrav')) return 'matter-antigrav'
+      if ($body.classList.contains('matter-elastic'))  return 'matter-elastic'
+      if ($body.classList.contains('matter-gas'))      return 'matter-gas'
+      return 'matter-elastic'
+    }
+
+    function getSize(matter) { // if not specified, use currently selected matter
+      matter = matter || getMatterClassname()
+      switch (window.localStorage.getItem(`${matter}-size`)) {
+        case 'size-selected-xs': return 0
+        case 'size-selected-s':  return 1
+        case 'size-selected-m':  return 2
+        case 'size-selected-l':  return 3
+        case 'size-selected-xl': return 4
+      }
+      return 3
+    }
+
+    function getTheme() {
+      if ($body.classList.contains('theme-purple')) return 0
+      if ($body.classList.contains('theme-black'))  return 1
+      if ($body.classList.contains('theme-white'))  return 2
+    }
+
+    function getTrail() {
+      if ($body.classList.contains('trail-none')) return 0
+      if ($body.classList.contains('trail-fade')) return 1
+      if ($body.classList.contains('trail-full')) return 2
+    }
+
+  </script>
+
+</body>
+</html>
